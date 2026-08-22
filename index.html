@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFD9E8">
+<title>Daily Ten</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Daily Ten">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="preloader">
+  <div class="preloader-content">
+    <div class="preloader-mark">10</div>
+    <p class="preloader-title">Getting ready for offline use</p>
+    <div class="preloader-track"><div class="preloader-fill" id="preloader-fill"></div></div>
+    <p class="preloader-count" id="preloader-count">0 / 0</p>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen is-active">
+    <div class="home-content">
+      <p class="eyebrow">30-Day Challenge</p>
+      <div class="streak-display">
+        <span id="streak-num">0</span>
+        <span class="streak-of">/ 30 days</span>
+      </div>
+      <p class="streak-caption" id="streak-caption">Let's start your streak today</p>
+
+      <div class="dots-grid" id="dots-grid" aria-hidden="true"></div>
+
+      <button id="btn-start" class="btn-primary">
+        <span>Start Today's Workout</span>
+      </button>
+      <p class="home-footnote" id="home-footnote">10 exercises · 1 minute each · ~10 minutes</p>
+    </div>
+  </section>
+
+  <!-- WORKOUT -->
+  <section id="screen-workout" class="screen">
+    <div class="exercise-image-wrap" id="exercise-image-wrap">
+      <img id="ex-image" alt="">
+    </div>
+
+    <div class="workout-topbar">
+      <button id="btn-pause" class="icon-btn" aria-label="Pause">
+        <svg id="icon-pause" viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+        <svg id="icon-play" viewBox="0 0 24 24" fill="none" style="display:none"><path d="M7 5v14l12-7-12-7z" fill="currentColor"/></svg>
+      </button>
+      <div class="progress-text"><span id="ex-index">1</span><span class="progress-of" id="progress-of">/10</span></div>
+      <button id="btn-mute" class="icon-btn" aria-label="Mute">
+        <svg id="icon-sound-on" viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 010 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg id="icon-sound-off" viewBox="0 0 24 24" fill="none" style="display:none"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <h2 id="ex-name" class="exercise-name sr-only">Exercise</h2>
+
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" viewBox="0 0 200 200">
+        <circle class="ring-bg" cx="100" cy="100" r="88"/>
+        <circle class="ring-progress" id="ring-progress" cx="100" cy="100" r="88"/>
+      </svg>
+      <div class="timer-number" id="timer-number">60</div>
+    </div>
+  </section>
+
+  <!-- COMPLETE -->
+  <section id="screen-complete" class="screen">
+    <div class="complete-content">
+      <div class="check-badge">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h1>Well done!</h1>
+      <p id="motivation-text" class="motivation-text"></p>
+      <p class="streak-update" id="streak-update"></p>
+      <button id="btn-done" class="btn-primary"><span>Done</span></button>
+    </div>
+  </section>
+
+</div>
+
+<audio id="audio-announce" preload="auto"></audio>
+<audio id="audio-complete" preload="auto"></audio>
+<audio id="audio-bg" loop preload="auto"></audio>
+
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
