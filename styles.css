@@ -79,8 +79,8 @@ body {
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 button { font-family: inherit; border: none; background: none; cursor: pointer; }
@@ -183,6 +183,13 @@ button:focus-visible { outline: 2px solid var(--accent-coral-dark); outline-offs
   color: var(--text-primary);
   box-shadow: 0 4px 14px rgba(45, 42, 50, 0.16);
   transition: background 150ms var(--ease), transform 150ms var(--ease);
+  /* Forces crisp, pixel-aligned GPU compositing — without this, iOS Safari
+     can leave circular elements looking soft/blurry after any transform-
+     based animation on an ancestor (e.g. the screen fade-in). */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn:active { transform: scale(0.92); background: #F5F2F7; }
