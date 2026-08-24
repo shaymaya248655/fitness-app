@@ -6,6 +6,7 @@
   const CHALLENGE_LENGTH = 30;
   const STORAGE_KEY = 'dailyTen.completedDates';
   const MUTE_KEY = 'dailyTen.muted';
+  const MUSIC_MUTE_KEY = 'dailyTen.musicMuted';
   // Must match CACHE_NAME in sw.js — this is the cache the preloader fills
   // and the one the service worker reads from when offline.
   const CACHE_NAME = 'daily-ten-v7';
@@ -59,6 +60,9 @@
   const btnMute = document.getElementById('btn-mute');
   const iconSoundOn = document.getElementById('icon-sound-on');
   const iconSoundOff = document.getElementById('icon-sound-off');
+  const btnMusicMute = document.getElementById('btn-music-mute');
+  const iconMusicOn = document.getElementById('icon-music-on');
+  const iconMusicOff = document.getElementById('icon-music-off');
   const exIndexEl = document.getElementById('ex-index');
   const progressFillEl = document.getElementById('progress-fill');
   const exImageWrap = document.getElementById('exercise-image-wrap');
@@ -115,6 +119,7 @@
   let tickHandle = null;
   let isPaused = false;
   let isMuted = localStorage.getItem(MUTE_KEY) === '1';
+  let isMusicMuted = localStorage.getItem(MUSIC_MUTE_KEY) === '1';
 
   // ---------- Placeholder image (data URI, generated once) ----------
   const PLACEHOLDER_SRC = (() => {
@@ -137,6 +142,8 @@
     let running = false;
     let schedulerTimer = null;
     let usingRealTrack = false;
+    // Music has its own independent mute state (separate from voice cues).
+    let muted = isMusicMuted;
 
     const BPM = 126;
     const SECONDS_PER_BEAT = 60 / BPM;
@@ -158,7 +165,7 @@
       if (!ctx) {
         ctx = new (window.AudioContext || window.webkitAudioContext)();
         masterGain = ctx.createGain();
-        masterGain.gain.value = isMuted ? 0 : BASE_VOLUME;
+        masterGain.gain.value = muted ? 0 : BASE_VOLUME;
         masterGain.connect(ctx.destination);
 
         // Pre-render a short noise buffer for the hi-hat.
@@ -174,7 +181,7 @@
       if (!bgSourceConnected) {
         const bgSource = ctx.createMediaElementSource(audioBg);
         bgGain = ctx.createGain();
-        bgGain.gain.value = isMuted ? 0 : BG_VOLUME;
+        bgGain.gain.value = muted ? 0 : BG_VOLUME;
         bgSource.connect(bgGain);
         bgGain.connect(ctx.destination);
         bgSourceConnected = true;
@@ -267,7 +274,7 @@
       ensureCtx();
       const [next, ...rest] = paths;
       audioBg.src = next;
-      bgGain.gain.value = isMuted ? 0 : BG_VOLUME;
+      bgGain.gain.value = muted ? 0 : BG_VOLUME;
       const playPromise = audioBg.play();
       if (playPromise && playPromise.then) {
         playPromise
@@ -324,15 +331,16 @@
       duck(active) {
         if (usingRealTrack) {
           if (!bgGain) return;
-          const target = isMuted ? 0 : (active ? BG_VOLUME_DUCKED : BG_VOLUME);
+          const target = muted ? 0 : (active ? BG_VOLUME_DUCKED : BG_VOLUME);
           bgGain.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.3);
           return;
         }
         if (!masterGain) return;
-        const target = isMuted ? 0 : (active ? 0.035 : BASE_VOLUME);
+        const target = muted ? 0 : (active ? 0.035 : BASE_VOLUME);
         masterGain.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.3);
       },
-      setMuted(muted) {
+      setMuted(m) {
+        muted = m;
         if (bgGain) {
           bgGain.gain.linearRampToValueAtTime(muted ? 0 : BG_VOLUME, (ctx ? ctx.currentTime : 0) + 0.15);
         }
@@ -574,9 +582,16 @@
     localStorage.setItem(MUTE_KEY, isMuted ? '1' : '0');
     iconSoundOn.style.display = isMuted ? 'none' : '';
     iconSoundOff.style.display = isMuted ? '' : 'none';
-    Music.setMuted(isMuted);
     audioAnnounce.muted = isMuted;
     audioComplete.muted = isMuted;
+  }
+
+  function toggleMusicMute() {
+    isMusicMuted = !isMusicMuted;
+    localStorage.setItem(MUSIC_MUTE_KEY, isMusicMuted ? '1' : '0');
+    iconMusicOn.style.display = isMusicMuted ? 'none' : '';
+    iconMusicOff.style.display = isMusicMuted ? '' : 'none';
+    Music.setMuted(isMusicMuted);
   }
 
   function pickMotivation() {
@@ -666,6 +681,8 @@
   async function init() {
     iconSoundOn.style.display = isMuted ? 'none' : '';
     iconSoundOff.style.display = isMuted ? '' : 'none';
+    iconMusicOn.style.display = isMusicMuted ? 'none' : '';
+    iconMusicOff.style.display = isMusicMuted ? '' : 'none';
 
     exercises = EXERCISES;
 
@@ -680,6 +697,7 @@
     btnStart.addEventListener('click', startWorkout);
     btnPause.addEventListener('click', togglePause);
     btnMute.addEventListener('click', toggleMute);
+    btnMusicMute.addEventListener('click', toggleMusicMute);
     btnDone.addEventListener('click', () => {
       renderHome();
       showScreen('home');
