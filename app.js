@@ -9,12 +9,14 @@
   const MUSIC_MUTE_KEY = 'dailyTen.musicMuted';
   // Must match CACHE_NAME in sw.js — this is the cache the preloader fills
   // and the one the service worker reads from when offline.
-  const CACHE_NAME = 'daily-ten-v9';
+  const CACHE_NAME = 'daily-ten-v10';
   const COUNT_TRACKS = [
     'audio/count_01.wav', 'audio/count_02.wav', 'audio/count_03.wav', 'audio/count_04.wav',
     'audio/count_05.wav', 'audio/count_06.wav', 'audio/count_07.wav', 'audio/count_08.wav',
     'audio/count_09.wav', 'audio/count_10.wav',
   ];
+  const REST_START_CUE = 'audio/rest_start.wav';
+  const REST_READY_CUE = 'audio/rest_ready.wav';
   const BG_TRACKS = [
     'audio/Music1.mp3',
     'audio/Music2.mp3',
@@ -568,6 +570,7 @@
     remaining = ex.restSeconds;
     updateRing();
     timerNumberEl.textContent = remaining;
+    playAnnounce(REST_START_CUE);
     startTimer();
   }
 
@@ -642,6 +645,10 @@
     remaining--;
     timerNumberEl.textContent = Math.max(remaining, 0);
     updateRing();
+
+    if (repsPhase === 'rest' && remaining === 2) {
+      playAnnounce(REST_READY_CUE);
+    }
 
     if (remaining <= 0) {
       Music.beep();
@@ -750,6 +757,7 @@
     }
     BG_TRACKS.forEach((t) => urls.push(t));
     COUNT_TRACKS.forEach((t) => urls.push(t));
+    urls.push(REST_START_CUE, REST_READY_CUE);
     urls.push('icons/icon-192.png', 'icons/icon-512.png');
     return urls;
   }
