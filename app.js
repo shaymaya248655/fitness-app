@@ -487,7 +487,7 @@
     exImageEl.alt = ex.name;
 
     if (ex.mode === 'reps') {
-      startRepsSet(ex, 1);
+      startRepsSet(ex, 1, { afterAnnounce: true });
     } else {
       repsPhase = null;
       timerRingWrapEl.classList.remove('is-tappable');
@@ -504,7 +504,12 @@
   // ring stays tappable throughout so a faster/slower set can be confirmed
   // manually at any point. With voice muted there's no way to pace the
   // count, so it falls back to a plain tap-to-confirm checkmark.
-  function startRepsSet(ex, setNum) {
+  //
+  // opts.afterAnnounce delays the spoken count until the "Next up: <name>"
+  // announcement finishes, so the two voice lines don't overlap — used only
+  // when entering a fresh exercise (set 1); set 2 (after a rest, no
+  // announce playing) always counts immediately.
+  function startRepsSet(ex, setNum, opts = {}) {
     repsPhase = 'set';
     repsSetNum = setNum;
     stopTimer();
@@ -512,8 +517,22 @@
     ringProgressEl.style.stroke = 'var(--accent-coral)';
     timerCaptionEl.textContent = `Set ${setNum} of ${ex.sets} · ${ex.reps} reps`;
     timerRingWrapEl.classList.add('is-tappable');
+
     if (isMuted) {
       timerNumberEl.textContent = '✓';
+      return;
+    }
+
+    const announcePlaying = opts.afterAnnounce && !audioAnnounce.paused && !audioAnnounce.ended;
+    if (announcePlaying) {
+      timerNumberEl.textContent = '✓';
+      const startCounting = () => {
+        if (repsPhase === 'set' && repsSetNum === setNum && exercises[currentIndex] === ex) {
+          playCount(1, ex.reps);
+        }
+      };
+      audioAnnounce.addEventListener('ended', startCounting, { once: true });
+      audioAnnounce.addEventListener('error', startCounting, { once: true });
     } else {
       playCount(1, ex.reps);
     }
