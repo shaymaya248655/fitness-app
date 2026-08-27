@@ -76,12 +76,15 @@
 
     <h2 id="ex-name" class="exercise-name sr-only">Exercise</h2>
 
-    <div class="timer-ring-wrap">
+    <div class="timer-ring-wrap" id="timer-ring-wrap">
       <svg class="timer-ring" viewBox="0 0 200 200">
         <circle class="ring-bg" cx="100" cy="100" r="88"/>
         <circle class="ring-progress" id="ring-progress" cx="100" cy="100" r="88"/>
       </svg>
-      <div class="timer-number" id="timer-number">60</div>
+      <div class="timer-content">
+        <div class="timer-number" id="timer-number">60</div>
+        <div class="timer-caption" id="timer-caption"></div>
+      </div>
     </div>
   </section>
 
@@ -103,6 +106,7 @@
 <audio id="audio-announce" preload="auto"></audio>
 <audio id="audio-complete" preload="auto"></audio>
 <audio id="audio-bg" loop preload="auto"></audio>
+<audio id="audio-count" preload="auto"></audio>
 
 <script src="app.js"></script>
 <script>

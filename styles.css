@@ -268,15 +268,38 @@ button:focus-visible { outline: 2px solid var(--accent-coral-dark); outline-offs
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 1s linear, stroke 400ms ease;
 }
-.timer-number {
+.timer-content {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+.timer-number {
   font-size: 36px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.timer-caption {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.timer-ring-wrap.is-tappable {
+  cursor: pointer;
+  animation: tapPulse 1.8s ease-in-out infinite;
+}
+@keyframes tapPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.04); }
 }
 
 /* ---------- COMPLETE ---------- */

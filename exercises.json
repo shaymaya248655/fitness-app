@@ -8,10 +8,10 @@
   { "id": 7,  "name": "Marches",              "image": "Images/7.png",  "announce": "audio/announce_07.wav" },
   { "id": 8,  "name": "Ballet Squats",        "image": "Images/8.png",  "announce": "audio/announce_08.wav" },
   { "id": 9,  "name": "Horseback Stance",     "image": "Images/9.png",  "announce": "audio/announce_09.wav" },
-  { "id": 10, "name": "Push-Ups",             "image": "Images/10.png", "announce": "audio/announce_10.wav" },
-  { "id": 11, "name": "Standing Knee Raises", "image": "Images/11.png", "announce": "audio/announce_11.wav" },
-  { "id": 12, "name": "Clap Under Knee",      "image": "Images/12.png", "announce": "audio/announce_12.wav" },
-  { "id": 13, "name": "Knee to Elbow",        "image": "Images/13.png", "announce": "audio/announce_13.wav" },
-  { "id": 14, "name": "Knee Closes",          "image": "Images/14.png", "announce": "audio/announce_14.wav" },
-  { "id": 15, "name": "Toe Touches",          "image": "Images/15.png", "announce": "audio/announce_15.wav" }
+  { "id": 10, "name": "Push-Ups",             "image": "Images/10.png", "announce": "audio/announce_10.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 },
+  { "id": 11, "name": "Standing Knee Raises", "image": "Images/11.png", "announce": "audio/announce_11.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 },
+  { "id": 12, "name": "Clap Under Knee",      "image": "Images/12.png", "announce": "audio/announce_12.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 },
+  { "id": 13, "name": "Knee to Elbow",        "image": "Images/13.png", "announce": "audio/announce_13.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 },
+  { "id": 14, "name": "Knee Closes",          "image": "Images/14.png", "announce": "audio/announce_14.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 },
+  { "id": 15, "name": "Toe Touches",          "image": "Images/15.png", "announce": "audio/announce_15.wav", "mode": "reps", "reps": 10, "sets": 2, "restSeconds": 15 }
 ]

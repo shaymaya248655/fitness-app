@@ -9,7 +9,12 @@
   const MUSIC_MUTE_KEY = 'dailyTen.musicMuted';
   // Must match CACHE_NAME in sw.js — this is the cache the preloader fills
   // and the one the service worker reads from when offline.
-  const CACHE_NAME = 'daily-ten-v7';
+  const CACHE_NAME = 'daily-ten-v8';
+  const COUNT_TRACKS = [
+    'audio/count_01.wav', 'audio/count_02.wav', 'audio/count_03.wav', 'audio/count_04.wav',
+    'audio/count_05.wav', 'audio/count_06.wav', 'audio/count_07.wav', 'audio/count_08.wav',
+    'audio/count_09.wav', 'audio/count_10.wav',
+  ];
   const BG_TRACKS = [
     'audio/Music1.mp3',
     'audio/Music2.mp3',
@@ -70,6 +75,8 @@
   const exNameEl = document.getElementById('ex-name');
   const ringProgressEl = document.getElementById('ring-progress');
   const timerNumberEl = document.getElementById('timer-number');
+  const timerCaptionEl = document.getElementById('timer-caption');
+  const timerRingWrapEl = document.getElementById('timer-ring-wrap');
 
   const motivationTextEl = document.getElementById('motivation-text');
   const streakUpdateEl = document.getElementById('streak-update');
@@ -78,6 +85,7 @@
   const audioAnnounce = document.getElementById('audio-announce');
   const audioComplete = document.getElementById('audio-complete');
   const audioBg = document.getElementById('audio-bg');
+  const audioCount = document.getElementById('audio-count');
 
   const MOTIVATION_LINES = [
     "Amazing work! You crushed today's workout. See you tomorrow!",
@@ -104,12 +112,12 @@
     { id: 7,  name: "Marches",          image: "Images/7.png",  announce: "audio/announce_07.wav" },
     { id: 8,  name: "Ballet Squats",    image: "Images/8.png",  announce: "audio/announce_08.wav" },
     { id: 9,  name: "Horseback Stance", image: "Images/9.png",  announce: "audio/announce_09.wav" },
-    { id: 10, name: "Push-Ups",         image: "Images/10.png", announce: "audio/announce_10.wav" },
-    { id: 11, name: "Standing Knee Raises", image: "Images/11.png", announce: "audio/announce_11.wav" },
-    { id: 12, name: "Clap Under Knee",      image: "Images/12.png", announce: "audio/announce_12.wav" },
-    { id: 13, name: "Knee to Elbow",        image: "Images/13.png", announce: "audio/announce_13.wav" },
-    { id: 14, name: "Knee Closes",          image: "Images/14.png", announce: "audio/announce_14.wav" },
-    { id: 15, name: "Toe Touches",          image: "Images/15.png", announce: "audio/announce_15.wav" },
+    { id: 10, name: "Push-Ups",         image: "Images/10.png", announce: "audio/announce_10.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
+    { id: 11, name: "Standing Knee Raises", image: "Images/11.png", announce: "audio/announce_11.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
+    { id: 12, name: "Clap Under Knee",      image: "Images/12.png", announce: "audio/announce_12.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
+    { id: 13, name: "Knee to Elbow",        image: "Images/13.png", announce: "audio/announce_13.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
+    { id: 14, name: "Knee Closes",          image: "Images/14.png", announce: "audio/announce_14.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
+    { id: 15, name: "Toe Touches",          image: "Images/15.png", announce: "audio/announce_15.wav", mode: 'reps', reps: 10, sets: 2, restSeconds: 15 },
   ];
 
   let exercises = [];
@@ -118,6 +126,13 @@
   let remaining = EXERCISE_SECONDS;
   let tickHandle = null;
   let isPaused = false;
+  // Reps-based exercises (e.g. Push-Ups) walk through 'set' -> 'rest' -> 'set'
+  // instead of a single 60s countdown. null means "this exercise is time-based".
+  let repsPhase = null;
+  let repsSetNum = 1;
+  let currentPhaseDuration = EXERCISE_SECONDS;
+  // Which rep count (1-10) is currently being spoken during a 'set' phase.
+  let countIdx = 0;
   let isMuted = localStorage.getItem(MUTE_KEY) === '1';
   let isMusicMuted = localStorage.getItem(MUSIC_MUTE_KEY) === '1';
 
@@ -390,13 +405,15 @@
         Music.resumeBackground();
         if (isBackgroundPaused) {
           startTimer();
+          if (repsPhase === 'set' && !isMuted && !audioCount.ended) audioCount.play().catch(() => {});
           isBackgroundPaused = false;
         }
       }
     } else {
       Music.pauseBackground();
-      if (workoutActive && !isPaused && tickHandle) {
+      if (workoutActive && !isPaused && (tickHandle || (repsPhase === 'set' && !audioCount.paused))) {
         stopTimer();
+        if (repsPhase === 'set') audioCount.pause();
         isBackgroundPaused = true;
       }
     }
@@ -468,9 +485,84 @@
     exImageEl.onerror = () => { exImageEl.onerror = null; exImageEl.src = PLACEHOLDER_SRC; };
     exImageEl.src = ex.image;
     exImageEl.alt = ex.name;
-    remaining = EXERCISE_SECONDS;
+
+    if (ex.mode === 'reps') {
+      startRepsSet(ex, 1);
+    } else {
+      repsPhase = null;
+      timerRingWrapEl.classList.remove('is-tappable');
+      timerCaptionEl.textContent = '';
+      currentPhaseDuration = EXERCISE_SECONDS;
+      remaining = EXERCISE_SECONDS;
+      updateRing();
+      timerNumberEl.textContent = remaining;
+    }
+  }
+
+  // Shows "Set N of M · X reps". With voice on, the coach counts the reps
+  // out loud (1..reps) and the set auto-completes when she finishes; the
+  // ring stays tappable throughout so a faster/slower set can be confirmed
+  // manually at any point. With voice muted there's no way to pace the
+  // count, so it falls back to a plain tap-to-confirm checkmark.
+  function startRepsSet(ex, setNum) {
+    repsPhase = 'set';
+    repsSetNum = setNum;
+    stopTimer();
+    ringProgressEl.style.strokeDashoffset = 0;
+    ringProgressEl.style.stroke = 'var(--accent-coral)';
+    timerCaptionEl.textContent = `Set ${setNum} of ${ex.sets} · ${ex.reps} reps`;
+    timerRingWrapEl.classList.add('is-tappable');
+    if (isMuted) {
+      timerNumberEl.textContent = '✓';
+    } else {
+      playCount(1, ex.reps);
+    }
+  }
+
+  // Speaks rep number n aloud and shows it on the ring; onCountAudioEnded
+  // advances to n+1, or auto-completes the set once the final rep is spoken.
+  function playCount(n, totalReps) {
+    if (repsPhase !== 'set') return;
+    countIdx = n;
+    timerNumberEl.textContent = String(n);
+    if (n > totalReps) {
+      setTimeout(() => { if (repsPhase === 'set') completeRepsSet(); }, 400);
+      return;
+    }
+    audioCount.src = COUNT_TRACKS[n - 1];
+    audioCount.muted = isMuted;
+    audioCount.play().catch(() => onCountAudioEnded());
+  }
+
+  function onCountAudioEnded() {
+    if (repsPhase !== 'set') return;
+    const ex = exercises[currentIndex];
+    playCount(countIdx + 1, ex.reps);
+  }
+
+  // Automatic countdown between sets.
+  function startRest(ex) {
+    repsPhase = 'rest';
+    timerRingWrapEl.classList.remove('is-tappable');
+    timerCaptionEl.textContent = 'Rest';
+    currentPhaseDuration = ex.restSeconds;
+    remaining = ex.restSeconds;
     updateRing();
     timerNumberEl.textContent = remaining;
+    startTimer();
+  }
+
+  // Ring tap during a rep set: move to rest after set 1, or to the next
+  // exercise after the final set (mirrors a normal timed exercise ending).
+  function completeRepsSet() {
+    const ex = exercises[currentIndex];
+    if (repsPhase !== 'set') return;
+    audioCount.pause();
+    if (repsSetNum < ex.sets) {
+      startRest(ex);
+    } else {
+      nextExercise();
+    }
   }
 
   const TRANSITION_OUT_MS = 90;
@@ -489,7 +581,7 @@
   }
 
   function updateRing() {
-    const fraction = remaining / EXERCISE_SECONDS;
+    const fraction = remaining / currentPhaseDuration;
     ringProgressEl.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - fraction);
     if (remaining <= 5) {
       ringProgressEl.style.stroke = 'var(--accent-mint)';
@@ -534,12 +626,17 @@
 
     if (remaining <= 0) {
       Music.beep();
-      nextExercise();
+      if (repsPhase === 'rest') {
+        startRepsSet(exercises[currentIndex], 2);
+      } else {
+        nextExercise();
+      }
     }
   }
 
   function startTimer() {
     stopTimer();
+    if (repsPhase === 'set') return; // waiting on a manual tap, not a countdown
     tickHandle = setInterval(tick, 1000);
   }
   function stopTimer() {
@@ -564,12 +661,14 @@
     isPaused = !isPaused;
     if (isPaused) {
       stopTimer();
+      if (repsPhase === 'set') audioCount.pause();
       iconPause.style.display = 'none';
       iconPlay.style.display = '';
       Music.duck(true);
       releaseWakeLock();
     } else {
       startTimer();
+      if (repsPhase === 'set' && !isMuted && !audioCount.ended) audioCount.play().catch(() => {});
       iconPause.style.display = '';
       iconPlay.style.display = 'none';
       Music.duck(false);
@@ -584,6 +683,7 @@
     iconSoundOff.style.display = isMuted ? '' : 'none';
     audioAnnounce.muted = isMuted;
     audioComplete.muted = isMuted;
+    audioCount.muted = isMuted;
   }
 
   function toggleMusicMute() {
@@ -630,6 +730,7 @@
       urls.push(`audio/completion_${String(i).padStart(2, '0')}.wav`);
     }
     BG_TRACKS.forEach((t) => urls.push(t));
+    COUNT_TRACKS.forEach((t) => urls.push(t));
     urls.push('icons/icon-192.png', 'icons/icon-512.png');
     return urls;
   }
@@ -713,6 +814,18 @@
         prevExercise();
       }
     });
+
+    // During a rep set (no countdown running), tapping the ring confirms
+    // the set is done. Otherwise let the tap fall through to the normal
+    // left/right skip zones above.
+    timerRingWrapEl.addEventListener('click', (e) => {
+      if (repsPhase === 'set') {
+        e.stopPropagation();
+        completeRepsSet();
+      }
+    });
+
+    audioCount.addEventListener('ended', onCountAudioEnded);
 
     ensureOfflineReady();
   }
