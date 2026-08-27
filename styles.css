@@ -243,7 +243,11 @@ button:focus-visible { outline: 2px solid var(--accent-coral-dark); outline-offs
 .timer-ring-wrap {
   position: absolute;
   left: 50%;
-  bottom: max(28px, env(safe-area-inset-bottom));
+  /* Extra buffer on top of the safe area — mobile Safari's own bottom
+     toolbar (visible whenever the page isn't scrolled, e.g. opened as a
+     regular tab rather than added to the Home Screen) isn't accounted for
+     by env(safe-area-inset-bottom) alone and can otherwise overlap the ring. */
+  bottom: max(56px, calc(env(safe-area-inset-bottom) + 24px));
   transform: translateX(-50%);
   width: 148px;
   height: 148px;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'daily-ten-v8';
+const CACHE_NAME = 'daily-ten-v9';
 const CORE_ASSETS = [
   './',
   './index.html',

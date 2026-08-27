@@ -9,7 +9,7 @@
   const MUSIC_MUTE_KEY = 'dailyTen.musicMuted';
   // Must match CACHE_NAME in sw.js — this is the cache the preloader fills
   // and the one the service worker reads from when offline.
-  const CACHE_NAME = 'daily-ten-v8';
+  const CACHE_NAME = 'daily-ten-v9';
   const COUNT_TRACKS = [
     'audio/count_01.wav', 'audio/count_02.wav', 'audio/count_03.wav', 'audio/count_04.wav',
     'audio/count_05.wav', 'audio/count_06.wav', 'audio/count_07.wav', 'audio/count_08.wav',
